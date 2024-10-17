@@ -10,8 +10,6 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
-	"go-fiber-postgres/models"
-
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -74,4 +72,36 @@ func GetUser(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(user)
+}
+
+func CreateUser(c *fiber.Ctx) error {
+	user := new(models.User)
+	if err := c.BodyParser(user); err != nil {
+		return c.Status(400).JSON(fiber.Map{"message": "Cannot parse body"})
+	}
+	DB.Create(&user)
+	return c.JSON(user)
+}
+
+func UpdateUser(c *fiber.Ctx) error {
+	id := c.Params("id")
+	var user models.User
+	if result := DB.First(&user, id); result.Error != nil {
+		return c.Status(404).JSON(fiber.Map{"message": "User not found"})
+	}
+	if err := c.BodyParser(&user); err != nil {
+		return c.Status(400).JSON(fiber.Map{"message": "Cannot parse body"})
+	}
+	DB.Save(&user)
+	return c.JSON(user)
+}
+
+func DeleteUser(c *fiber.Ctx) error {
+	id := c.Params("id")
+	var user models.User
+	if result := DB.First(&user, id); result.Error != nil {
+		return c.Status(404).JSON(fiber.Map{"message": "User not found"})
+	}
+	DB.Delete(&user)
+	return c.SendStatus(204)
 }
